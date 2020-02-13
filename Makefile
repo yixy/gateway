@@ -18,6 +18,7 @@ build:
 	# build blade cli
 	$(GO) build $(GO_FLAGS) -o $(BUILD_TARGET_PKG_DIR)/gateway .
 	cp config.yml $(BUILD_TARGET_PKG_DIR)
+	cp *.pem $(BUILD_TARGET_PKG_DIR)
 
 # clean all build result
 clean:

@@ -9,12 +9,9 @@ import (
 	"os/exec"
 	"os/signal"
 	"path"
-	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
-
-	"github.com/spf13/viper"
 
 	"github.com/yixy/gateway/server/handler"
 
@@ -26,8 +23,7 @@ import (
 var errCh chan error
 
 func Start() error {
-	logFile := filepath.Join(cfg.Dir, viper.GetString(cfg.LOG_FILE))
-	log.InitLogger(logFile)
+	log.InitLogger(cfg.LogFile)
 	log.Logger.Info("gateway init...")
 	var errServerCh chan error = make(chan error)
 	var errShutCh chan error = make(chan error)
@@ -35,6 +31,7 @@ func Start() error {
 	defer close(errShutCh)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handler.NotFoundHandler)
+	mux.HandleFunc("/api", handler.APIhandler)
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Port),
 		Handler:      mux,

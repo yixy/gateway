@@ -1,4 +1,6 @@
 LOG_FILE : logs/gateway.log
+PRI_KEY_FILE : pri.pem
+PUB_KEY_FILE : pub.pem
 PORT : 9090
 READ_TIMEOUT : 20
 WRITE_TIMEOUT : 20
