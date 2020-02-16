@@ -76,7 +76,7 @@ func initConfig() {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 
-	err = cfg.CfgCheck()
+	err = cfg.ReadCfg()
 	if err != nil {
 		fmt.Println("config file is invalid.", err)
 		return

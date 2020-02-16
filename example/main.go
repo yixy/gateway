@@ -2,14 +2,13 @@
 package main
 
 import (
-	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
 
 	"github.com/yixy/gateway/cfg"
-	"github.com/yixy/gateway/server/util/jose"
+	"github.com/yixy/gateway/server/util/resp"
 
 	"github.com/SermoDigital/jose/jws"
 )
@@ -21,25 +20,12 @@ func main() {
 		panic(err)
 	}
 
-	pubKey, err := cfg.LoadKey("pub.pem")
+	rsaPub, err := cfg.LoadKey("pub.pem")
 	if err != nil {
 		panic(err)
 	}
 
-	priKey, err := cfg.LoadKey("pri.pem")
-	if err != nil {
-		panic(err)
-	}
-
-	rsaPub, err := x509.ParsePKIXPublicKey(pubKey)
-	if err != nil {
-		panic(err)
-	}
-
-	rsaPriv, err := x509.ParsePKCS8PrivateKey(priKey)
-	if err != nil {
-		panic(err)
-	}
+	rsaPriv, err := cfg.LoadKey("pri.pem")
 
 	now := time.Now()
 	claims := jws.Claims{}
@@ -51,10 +37,10 @@ func main() {
 	claims.SetAudience("icbc")
 	claims.SetJWTID("msgid-abcdefghijklmnopqrstuvwxyz") //msgid
 	//
-	data := jose.Data{
-		Charset:     jose.CHARSET,
-		Format:      jose.FORMAT,
-		EncryptType: jose.ENCRYPT_TYPE,
+	data := resp.Data{
+		Charset:     resp.CHARSET,
+		Format:      resp.FORMAT,
+		EncryptType: resp.ENCRYPT_TYPE,
 		Hashed:      string(hashed),
 		HashType:    os.Args[1],
 		Resp:        nil,

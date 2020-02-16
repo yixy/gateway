@@ -13,10 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/yixy/gateway/server/handler"
-
 	"github.com/yixy/gateway/cfg"
 	"github.com/yixy/gateway/log"
+	"github.com/yixy/gateway/server/handler"
 	"go.uber.org/zap"
 )
 
@@ -31,7 +30,7 @@ func Start() error {
 	defer close(errShutCh)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", handler.NotFoundHandler)
-	mux.HandleFunc("/api", handler.APIhandler)
+	mux.HandleFunc("/api/", handler.ServiceHandler)
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Port),
 		Handler:      mux,
@@ -74,9 +73,18 @@ func Start() error {
 	defer syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN)
 
 	//record pid
-	pid := strconv.Itoa(os.Getpid())
-	log.Logger.Info("record pid", zap.String("pid", pid))
-	lockFile.WriteString(pid)
+	log.Logger.Info("record pid", zap.String("pid", cfg.Pid))
+	lockFile.WriteString(cfg.Pid)
+
+	//get data from database
+	go func() {
+		//TODO
+	}()
+
+	//init metrics
+	go func() {
+		//TODO
+	}()
 
 	//start httpserver
 	go func() {

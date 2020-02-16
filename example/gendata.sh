@@ -37,10 +37,10 @@ files="100B 100M 10B  10K  10M  1G   1K   1M   500K 500M"
 
 for file in $files
 do
-  shasum -a 256 data/$file | awk '{printf $1}' > data/$file.hash
+  shasum -a 512 data/$file | awk '{printf $1}' > data/$file.hash
 	#openssl dgst -sign pri.pem -sha256 -out data/$file.byte data/$file.hash
 	#base64 data/$file.byte > data/$file.sign
 	go build -o jwt .
-  ./jwt sha256 data/$file.hash > data/$file.jwt
+  ./jwt SHA512 data/$file.hash > data/$file.jwt
 done
 
