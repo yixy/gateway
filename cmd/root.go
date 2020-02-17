@@ -44,6 +44,7 @@ func initConfig() {
 	path, err := os.Executable()
 	if err != nil {
 		fmt.Println("find execute binary dir error", err)
+		os.Exit(1)
 	}
 	cfg.Dir = filepath.Dir(path)
 	fmt.Println("================ print execute binary info ================")
@@ -71,7 +72,7 @@ func initConfig() {
 			// Config file was found but another error was produced
 			fmt.Println("Config file was found but another error was produced.", err)
 		}
-		return
+		os.Exit(1)
 	} else {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
@@ -79,6 +80,6 @@ func initConfig() {
 	err = cfg.ReadCfg()
 	if err != nil {
 		fmt.Println("config file is invalid.", err)
-		return
+		os.Exit(1)
 	}
 }

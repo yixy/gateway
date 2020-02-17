@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -17,13 +19,15 @@ import (
 	//"github.com/yixy/tianmu-security/encrypt"
 )
 
+var connection []string
+
 const MAX_CONNS_PER_HOST = 100
 
 var client = &http.Client{
 	Transport: &http.Transport{
 		MaxIdleConnsPerHost: MAX_CONNS_PER_HOST,
 	},
-	Timeout: time.Duration(cfg.CTIMEOUT) * time.Millisecond,
+	Timeout: time.Duration(cfg.CTIMEOUT) * time.Second,
 }
 
 func ServiceHandler(w http.ResponseWriter, req *http.Request) {
@@ -162,23 +166,100 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	proxyReq, err := http.NewRequest(req.Method, "", req.Body)
+	proxyReq, err := http.NewRequest(req.Method, "http://localhost:7777", req.Body)
 	if err != nil {
-
+		resp.Return500Err(w, iss, requestURI, jti, alg, data, resp.INTERNAL_SERVER_ERROR_PROXYREQ, err, zuuid)
+		return
 	}
+
+	//set request headers
+	connection = strings.Split(req.Header.Get("Connection"), ",")
+	for k, v := range req.Header {
+		//Hop-by-hop header, do not transfer
+		if isHopByHop(k) {
+			continue
+		}
+		flag := false
+		for _, s := range connection {
+			if k == strings.TrimSpace(s) {
+				flag = true
+				break
+			}
+		}
+		if flag {
+			continue
+		}
+		for _, vv := range v {
+			proxyReq.Header.Add(k, vv)
+		}
+	}
+
 	proxyResp, err := client.Do(proxyReq)
 	if err != nil {
-
+		t, ok := err.(interface {
+			Timeout() bool
+		})
+		if ok && t.Timeout() {
+			resp.Return504Err(w, iss, requestURI, jti, alg, data, resp.GATEWAY_TIMEOUT, err, zuuid)
+			return
+		}
+		resp.Return502Err(w, iss, requestURI, jti, alg, data, resp.BAD_GATEWAY_CONN, err, zuuid)
+		return
 	}
 	if proxyResp == nil {
-		panic("")
+		resp.Return502Err(w, iss, requestURI, jti, alg, data, resp.BAD_GATEWAY_CONN2, nil, zuuid)
+		return
 	}
 
-	//set headers
+	defer func() {
+		err = proxyResp.Body.Close()
+		if err != nil {
+			log.Logger.Error("call defer", zap.Error(err))
+		}
+	}()
+
+	//set response headers
+	connection = strings.Split(proxyResp.Header.Get("Connection"), ",")
+	for k, v := range proxyResp.Header {
+		//Hop-by-hop header, do not transfer
+		if isHopByHop(k) {
+			continue
+		}
+		if k == resp.GATEWAY_APIRESP {
+			tmpData := &resp.Data{}
+			err := json.Unmarshal([]byte(v[0]), tmpData)
+			if err != nil {
+				fmt.Println(err)
+			}
+			fmt.Println(tmpData)
+			continue
+		}
+		flag := false
+		for _, s := range connection {
+			if k == strings.TrimSpace(s) {
+				flag = true
+				break
+			}
+		}
+		if flag {
+			continue
+		}
+		for _, vv := range v {
+			w.Header().Add(k, vv)
+		}
+	}
+
+	//set cookies
+	//for _, value := range proxyResp.Request.Cookies() {
+	//	w.Header().Add(value.Name, value.Value)
+	//}
+
+	w.WriteHeader(proxyResp.StatusCode)
 
 	_, err = io.Copy(w, proxyResp.Body)
 	if err != nil {
-
+		resp.Return502Err(w, iss, requestURI, jti, alg, data, resp.BAD_GATEWAY_IO_ERR, err, zuuid)
+		return
 	}
 
 }
@@ -186,4 +267,37 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 func checkAppId(appId, alg string, data *resp.Data) (bool, resp.ReturnCode) {
 	//TODO get database data to check
 	return true, resp.OK
+}
+
+func isHopByHop(header string) (result bool) {
+	//Hop-by-hop header
+	//* Connetion
+	//* Keep-Alive
+	//* Proxy-Authenticate
+	//* Proxy-Authorization
+	//* Trailer
+	//* TE
+	//* Transfer-Encoding
+	//* Upgrade
+	switch header {
+	case "Connection":
+		result = true
+	case "Keep-Alive":
+		result = true
+	case "Proxy-Authenticate":
+		result = true
+	case "Proxy-Authorization":
+		result = true
+	case "Trailer":
+		result = true
+	case "TE":
+		result = true
+	case "Transfer-Encoding":
+		result = true
+	case "Upgrade":
+		result = true
+	default:
+		result = false
+	}
+	return result
 }

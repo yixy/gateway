@@ -14,26 +14,27 @@ import (
 )
 
 const (
-	FORMAT       = "stream"
-	CHARSET      = "UTF-8"
-	ENCRYPT_TYPE = ""
-	HASHED       = ""
-	GATEWAY_JWT  = "Gateway-jwt"
-	ICBC         = "icbc"
-	ALG          = "alg"
-	DATA         = "data"
-	RS256        = "RS256"
-	RS384        = "RS384"
-	RS512        = "RS512"
-	SHA256       = "SHA256"
-	SHA384       = "SHA384"
-	SHA512       = "SHA512"
+	FORMAT          = "stream"
+	CHARSET         = "UTF-8"
+	ENCRYPT_TYPE    = ""
+	HASHED          = ""
+	GATEWAY_JWT     = "Gateway-jwt"
+	GATEWAY_APIRESP = "Gateway-Apiresp"
+	ICBC            = "icbc"
+	ALG             = "alg"
+	DATA            = "data"
+	RS256           = "RS256"
+	RS384           = "RS384"
+	RS512           = "RS512"
+	SHA256          = "SHA256"
+	SHA384          = "SHA384"
+	SHA512          = "SHA512"
 )
 
 type Data struct {
 	Format      string    `json:"format" mapstructure:"format"`
 	Charset     string    `json:"charset" mapstructure:"charset"`
-	EncryptType string    `json:"encrypt_type" mapstructure:"encrypt_type"`
+	EncryptType string    `json:"encrypt_type,omitempty" mapstructure:"encrypt_type"`
 	HashType    string    `json:"hash_type" mapstructure:"hash_type"`
 	Hashed      string    `json:"hashed" mapstructure:"hashed"`
 	Resp        *Response `json:"resp,omitempty" mapstructure:"resp"`
