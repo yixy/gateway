@@ -2,9 +2,9 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
+	"net/textproto"
 	"strings"
 	"time"
 
@@ -181,7 +181,7 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		flag := false
 		for _, s := range connection {
-			if k == strings.TrimSpace(s) {
+			if k == textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(s)) {
 				flag = true
 				break
 			}
@@ -194,6 +194,7 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	log.Logger.Info("send request to upstream server.")
 	proxyResp, err := client.Do(proxyReq)
 	if err != nil {
 		t, ok := err.(interface {
@@ -220,23 +221,27 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 
 	//set response headers
 	connection = strings.Split(proxyResp.Header.Get("Connection"), ",")
+	respData := &resp.Data{}
 	for k, v := range proxyResp.Header {
 		//Hop-by-hop header, do not transfer
 		if isHopByHop(k) {
 			continue
 		}
 		if k == resp.GATEWAY_APIRESP {
-			tmpData := &resp.Data{}
-			err := json.Unmarshal([]byte(v[0]), tmpData)
+			err := json.Unmarshal([]byte(v[0]), respData)
 			if err != nil {
-				fmt.Println(err)
+				resp.Return502Err(w, iss, requestURI, jti, alg, data, resp.BAD_GATEWAY_CONN2, err, zuuid)
+				return
 			}
-			fmt.Println(tmpData)
+			respData.HashType = data.HashType
+			respData.Format = data.Format
+			respData.Charset = data.Charset
+			respData.EncryptType = data.EncryptType
 			continue
 		}
 		flag := false
 		for _, s := range connection {
-			if k == strings.TrimSpace(s) {
+			if k == textproto.CanonicalMIMEHeaderKey(strings.TrimSpace(s)) {
 				flag = true
 				break
 			}
@@ -254,8 +259,16 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 	//	w.Header().Add(value.Name, value.Value)
 	//}
 
+	respJwt, err := resp.GetRespJwt(iss, requestURI, jti, alg, respData)
+	if err != nil {
+		resp.Return500Err(w, iss, requestURI, jti, alg, data, resp.INTERNAL_SERVER_ERROR_GENJWT, err, zuuid)
+		return
+	}
+
+	w.Header().Set(resp.GATEWAY_APIRESP, respJwt)
 	w.WriteHeader(proxyResp.StatusCode)
 
+	log.Logger.Info("read response from upstream server.")
 	_, err = io.Copy(w, proxyResp.Body)
 	if err != nil {
 		resp.Return502Err(w, iss, requestURI, jti, alg, data, resp.BAD_GATEWAY_IO_ERR, err, zuuid)

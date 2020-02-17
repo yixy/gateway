@@ -35,9 +35,11 @@ const (
 	FORBIDDEN_JWT_VERRIFY          = -40315
 	INTERNAL_SERVER_ERROR_JWS      = -50001
 	INTERNAL_SERVER_ERROR_PROXYREQ = -50002
+	INTERNAL_SERVER_ERROR_GENJWT   = -50003
 	BAD_GATEWAY_CONN               = -50201
 	BAD_GATEWAY_CONN2              = -50202
 	BAD_GATEWAY_IO_ERR             = -50203
+	BAD_GATEWAY_PARSE_ERR          = -50204
 	GATEWAY_TIMEOUT                = -50401
 )
 
@@ -60,9 +62,11 @@ var Resp = map[ReturnCode]string{
 	FORBIDDEN_JWT_VERRIFY:          "FORBIDDEN: JWT is expired or signing verify failed",
 	INTERNAL_SERVER_ERROR_JWS:      "INTERNAL SERVER ERROR: Parse JWS error",
 	INTERNAL_SERVER_ERROR_PROXYREQ: "INTERNAL SERVER ERROR: new proxy request error",
+	INTERNAL_SERVER_ERROR_GENJWT:   "INTERNAL SERVER ERROR: generate response jwt error",
 	BAD_GATEWAY_CONN:               "BAD_GATEWAY: Send request ro upstream server error",
 	BAD_GATEWAY_CONN2:              "BAD_GATEWAY: upstream server response is nil",
 	BAD_GATEWAY_IO_ERR:             "BAD_GATEWAY: copy upstream server response err",
+	BAD_GATEWAY_PARSE_ERR:          "BAD_GATEWAY: parse upstream response header error",
 	GATEWAY_TIMEOUT:                "GATEWAY TIMEOUT: Call upstream server timeout",
 }
 
