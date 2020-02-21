@@ -35,12 +35,20 @@ fi
 
 files="100B 100M 10B  10K  10M  1G   1K   1M   500K 500M"
 
+go build -o jwt .
+
+rm data/client_script
+rm data/server_script
+
 for file in $files
 do
   shasum -a 512 data/$file | awk '{printf $1}' > data/$file.hash
 	#openssl dgst -sign pri.pem -sha256 -out data/$file.byte data/$file.hash
 	#base64 data/$file.byte > data/$file.sign
-	go build -o jwt .
   ./jwt SHA512 data/$file.hash > data/$file.jwt
+
+  echo 'nohup hey -n 100000000 -c 100 -z 10s -m POST -H "Gateway-Jwt: '`cat data/$file.jwt`'" -D 'data/$file' http://10.168.0.5:9090/api/xxx/yyy/v1 &' >> data/client_script
+
+  echo 'nohup gudong start -H='"'"'Gateway-Apiresp:{"hashed":"'`cat data/$file.hash`'","resp":{"return_code":0,"return_msg":"success"}}'"'"' --body-file=data/'$file' &' >> data/server_script
 done
 

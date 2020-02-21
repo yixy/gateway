@@ -1,5 +1,4 @@
 target/
-*.pem
 example/data/*
 example/jwt
 .DS_Store

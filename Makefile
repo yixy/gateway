@@ -1,6 +1,7 @@
 .PHONY: build clean
 
-GO_ENV=CGO_ENABLED=1
+#GO_ENV=CGO_ENABLED=1 GOOS=linux
+GO_ENV=GOOS=linux
 GO_MODULE=GO111MODULE=on
 VERSION_PKG=github.com/yixy/gateway/version
 VERSION=0.0.1
@@ -19,6 +20,7 @@ build:
 	$(GO) build $(GO_FLAGS) -o $(BUILD_TARGET_PKG_DIR)/gateway .
 	cp config.yml $(BUILD_TARGET_PKG_DIR)
 	cp *.pem $(BUILD_TARGET_PKG_DIR)
+	tar -zcvf $(BUILD_TARGET_PKG_DIR).tar.gz ${BUILD_TARGET_PKG_DIR}
 
 # clean all build result
 clean:

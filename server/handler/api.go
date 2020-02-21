@@ -93,8 +93,16 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	//TODO
 	//check appId
-	if ok, returnCode := checkAppId(iss, alg, data); !ok {
-		resp.Return403Err(w, iss, requestURI, jti, alg, data, returnCode, nil, zuuid)
+	if ok, returnCode, err := checkAppId(iss, alg, data); !ok {
+		resp.Return403Err(w, iss, requestURI, jti, alg, data, returnCode, err, zuuid)
+		return
+	}
+
+	//TODO
+	//check API
+	ok, returnCode, serviceUrl, err := checkApi(iss, req.URL.Path)
+	if !ok {
+		resp.Return403Err(w, iss, requestURI, jti, alg, data, returnCode, err, zuuid)
 		return
 	}
 
@@ -166,7 +174,7 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	proxyReq, err := http.NewRequest(req.Method, "http://localhost:7777", req.Body)
+	proxyReq, err := http.NewRequest(req.Method, serviceUrl, req.Body)
 	if err != nil {
 		resp.Return500Err(w, iss, requestURI, jti, alg, data, resp.INTERNAL_SERVER_ERROR_PROXYREQ, err, zuuid)
 		return
@@ -194,6 +202,7 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	//send request to upstream server.
 	log.Logger.Info("send request to upstream server.")
 	proxyResp, err := client.Do(proxyReq)
 	if err != nil {
@@ -211,7 +220,6 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 		resp.Return502Err(w, iss, requestURI, jti, alg, data, resp.BAD_GATEWAY_CONN2, nil, zuuid)
 		return
 	}
-
 	defer func() {
 		err = proxyResp.Body.Close()
 		if err != nil {
@@ -268,6 +276,7 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set(resp.GATEWAY_APIRESP, respJwt)
 	w.WriteHeader(proxyResp.StatusCode)
 
+	//read response from upstream server.
 	log.Logger.Info("read response from upstream server.")
 	_, err = io.Copy(w, proxyResp.Body)
 	if err != nil {
@@ -277,9 +286,14 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func checkAppId(appId, alg string, data *resp.Data) (bool, resp.ReturnCode) {
+func checkAppId(appId, alg string, data *resp.Data) (ok bool, returnCode resp.ReturnCode, err error) {
 	//TODO get database data to check
-	return true, resp.OK
+	return true, resp.OK, nil
+}
+
+func checkApi(appId, path string) (ok bool, returnCode resp.ReturnCode, serviceUrl string, err error) {
+	//TODO
+	return true, resp.OK, "http://10.168.0.6:7777/test", nil
 }
 
 func isHopByHop(header string) (result bool) {
