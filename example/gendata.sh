@@ -47,8 +47,7 @@ do
 	#base64 data/$file.byte > data/$file.sign
   ./jwt SHA512 data/$file.hash > data/$file.jwt
 
-  echo 'nohup hey -n 100000000 -c 100 -z 10s -m POST -H "Gateway-Jwt: '`cat data/$file.jwt`'" -D 'data/$file' http://10.168.0.5:9090/api/xxx/yyy/v1 &' >> data/client_script
+  echo 'hey -n 100000000 -c 100 -z 5m -m POST -H "Gateway-Jwt: '`cat data/$file.jwt`'" -D 'data/$file' http://10.168.0.5:9090/api/xxx/yyy/v2 ' >> data/client_script
 
-  echo 'nohup gudong start -H='"'"'Gateway-Apiresp:{"hashed":"'`cat data/$file.hash`'","resp":{"return_code":0,"return_msg":"success"}}'"'"' --body-file=data/'$file' &' >> data/server_script
+  echo 'nohup gudong start -H='"'"'Gateway-Apiresp:{"hashed":"'`cat data/$file.hash`'","resp":{"return_code":0,"return_msg":"success"}}'"'"' --body-file=data/'$file' -l=error -d=1000 -r=300000 -w=300000 &' >> data/server_script
 done
-

@@ -27,7 +27,7 @@ var client = &http.Client{
 	Transport: &http.Transport{
 		MaxIdleConnsPerHost: MAX_CONNS_PER_HOST,
 	},
-	Timeout: time.Duration(cfg.CTIMEOUT) * time.Second,
+	Timeout: time.Duration(cfg.ClientTimeout) * time.Second,
 }
 
 func ServiceHandler(w http.ResponseWriter, req *http.Request) {
