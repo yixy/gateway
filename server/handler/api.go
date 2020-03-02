@@ -180,6 +180,8 @@ func ServiceHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	proxyReq.Close = true
+
 	//set request headers
 	connection = strings.Split(req.Header.Get("Connection"), ",")
 	for k, v := range req.Header {

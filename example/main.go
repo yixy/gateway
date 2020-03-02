@@ -48,7 +48,7 @@ func main() {
 
 	claims.Set("data", data)
 
-	signingMethod := jws.GetSigningMethod("RS512")
+	signingMethod := jws.GetSigningMethod("RS256")
 	j := jws.NewJWT(claims, signingMethod)
 	b, err := j.Serialize(rsaPriv)
 	if err != nil {

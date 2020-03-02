@@ -73,7 +73,7 @@ var Resp = map[ReturnCode]string{
 func GetResponse(appId string, urlPath string, jwtId string, signAlg string,
 	data *Data, returnCode ReturnCode, err error, zuuid zap.Field) (jwt string, body []byte) {
 	returnMsg := Resp[returnCode]
-	log.Logger.Error(returnMsg, zap.Any("return_code", returnCode), zap.Error(err))
+	log.Logger.Error(returnMsg, zap.Any("return_code", returnCode), zap.Error(err), zuuid)
 	//set data
 	data.Resp = &Response{returnCode, returnMsg, nil}
 	body, err = json.Marshal(data.Resp)

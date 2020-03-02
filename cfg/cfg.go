@@ -49,7 +49,7 @@ var (
 
 func ReadCfg() error {
 	var err error
-	Pid := strconv.Itoa(os.Getpid())
+	Pid = strconv.Itoa(os.Getpid())
 	fmt.Println("Pid", Pid)
 	fmt.Println("========= print config file =========")
 	for _, key := range viper.AllKeys() {
